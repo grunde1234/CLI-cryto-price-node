@@ -3,56 +3,65 @@ import inquirer from 'inquirer';
 import axios from 'axios';
 import colors from 'colors';
 
-let userAnswer = ''; // Make it accessible in server scope
-
-const config = {
-  headers: {
-    'X-CMC_PRO_API_KEY': process.env.CMC_PRO_API_KEY,
-  }
-};
-
 async function cryptoServer() {
   try {
-    const faveReptile = await inquirer.prompt([
+    // Ask user which crypto to track
+    const { crypto } = await inquirer.prompt([
       {
         type: 'input',
         name: 'crypto',
-        message: 'What are you looking for?',
+        message: 'Which cryptocurrency are you tracking?',
         default: 'bitcoin',
       }
     ]);
 
-    userAnswer = faveReptile.crypto; // Save just the string answer
+    console.log(`🔁 Tracking real-time ${crypto} prices...\n`.yellow);
 
-  const response =  axios.get('https://api.coingecko.com/api/v3/coins/markets', {
-        params: {
-          vs_currency: 'usd',
-          ids: userAnswer,
-        }
-      })
-        .then(response => {
-          const data = response.data[0];
-          console.log(`📈 Market Cap: $${Math.round(data.market_cap).toLocaleString()}`.magenta);
-          console.log(`💲Current Price: $${Math.round(data.current_price).toLocaleString()}`.green);
-          console.log(`💯 Percentage increace: %${data.price_change_percentage_24h}`.green);
-        })
-        .catch(err => {
-          console.error(err);
+    // Function to fetch and print data
+    const fetchData = async () => {
+      try {
+        const response = await axios.get('https://api.coingecko.com/api/v3/coins/markets', {
+          params: {
+            vs_currency: 'usd',
+            ids: crypto,
+          }
         });
-    // NO extra res.end() here
 
+        const data = response.data[0];
+        const currentPrice = Math.round(data.current_price).toLocaleString();
+        const marketCap = Math.round(data.market_cap).toLocaleString();
+        const percentChange = data.price_change_percentage_24h?.toFixed(2);
+
+        console.clear(); // Clear CLI before each update
+        console.log(`📈 ${crypto.toUpperCase()} Market Data:`.bold.green);
+        console.log(`💲 Current Price: $${currentPrice}`.blue);
+        console.log(`🏦 Market Cap: $${marketCap}`.magenta);
+        console.log(`📊 24h Change: ${percentChange}%`.cyan);
+
+      } catch (err) {
+        console.error('Failed to fetch data:', err.message.red);
+      }
+    };
+
+    // Call once immediately
+    await fetchData();
+
+    // Then poll every 10 seconds
+    setInterval(fetchData, 30000);
+
+    // Optional server
     const server = http.createServer((req, res) => {
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(data));
+      res.writeHead(200, { 'Content-Type': 'text/plain' });
+      res.end(JSON.stringify(fetchData()));
     });
 
     const PORT = 8000;
     server.listen(PORT, () => {
-      console.log(`✅ Server is running on http://localhost:${PORT}`.blue);
+      console.log(`🌐 Server running at http://localhost:${PORT}`.green);
     });
 
   } catch (error) {
-    console.error('Error:', error);
+    console.error('❌ Error:', error.message.red);
   }
 }
 
