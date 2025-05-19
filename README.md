@@ -25,5 +25,5 @@ npm run dev
 ## 🖥️ Preview
 Once running, the CLI output should look like this (example from Git Bash, but works on any terminal with Node.js support):
 
-![](/pic.png)
+![Relative](/pic.png)
 
