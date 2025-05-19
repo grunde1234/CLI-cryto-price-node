@@ -30,4 +30,4 @@ npm run dev
 ## 🖥️ Preview
 Once running, the CLI output should look like this (example from Git Bash, but works on any terminal with Node.js support):
 
- <img src=”/pic.png” alt=”Relative” />
+![Relative](pic.png)
